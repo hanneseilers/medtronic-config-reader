@@ -35,3 +35,10 @@ def show_help_export_carelink():
     ok_button = "Fortsetzen"
 
     return easygui.msgbox(msg, title, ok_button)
+
+
+def get_csv_data_file(default_path, allowed_file_type="*.csv"):
+    msg = "Wählen Sie die CSV-Daten Datein aus dem CareLink Export aus."
+    title = "Datenquelle wählen"
+
+    return easygui.fileopenbox(msg, title, default_path, allowed_file_type)
