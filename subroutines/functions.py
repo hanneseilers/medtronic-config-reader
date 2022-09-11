@@ -1,3 +1,6 @@
+import re
+
+
 def read_csv_file_data(csv_data_file):
     f = open(csv_data_file, 'r')
     delimiter_char = ';'
@@ -39,16 +42,28 @@ def read_csv_file_data(csv_data_file):
 
 def filter_data_sets(data_sets, keys_to_filter=[]):
     filtered_data_sets = []
+    key_index = "Index"
     for entry in data_sets:
+
+        # check if entry is a valid dictionary
         if isinstance(entry, dict):
 
-            # search for keys in entry
-            add = True
-            for key in keys_to_filter:
-                if key not in entry or len(entry[key]) == 0:
-                    add = False
-                    break
-            if add:
-                filtered_data_sets.append(entry)
+            # check for valid index
+            if key_index in entry and is_float(entry[key_index]):
+
+                # search for keys in entry
+                add = True
+                for key in keys_to_filter:
+                    if key not in entry or len(entry[key]) == 0:
+                        add = False
+                        break
+                if add:
+                    filtered_data_sets.append(entry)
 
     return filtered_data_sets
+
+
+def is_float(string):
+    string = str(string)
+    string = string.replace(',', '.')
+    return re.match(r'^-?\d+(?:\.\d+)$', string) is not None

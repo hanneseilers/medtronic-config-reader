@@ -39,10 +39,9 @@ def process():
                 key_bolus_number,
                 key_bolus_volume])
             for entry in data_sets:
-                # print(entry[key_date] + " " + entry[key_time] + ": " + entry[key_bolus_number]
-                #      + " " + unit_blood_glucose)
-                # print("\t" + entry[key_bolus_volume] + " " + unit_insulin)
-                print(entry)
+                print(entry[key_date] + " " + entry[key_time] + ": " + entry[key_bolus_number]
+                     + " " + unit_blood_glucose)
+                print("\t" + entry[key_bolus_volume] + " " + unit_insulin)
 
 
 # ---- MAIN ----
