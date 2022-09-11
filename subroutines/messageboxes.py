@@ -37,7 +37,10 @@ def show_help_export_carelink():
     return easygui.msgbox(msg, title, ok_button)
 
 
-def get_csv_data_file(default_path, allowed_file_type="*.csv"):
+def get_csv_data_file(default_path: str, allowed_file_type: str = "*.csv") -> str:
+    """
+    :rtype: str
+    """
     msg = "Wählen Sie die CSV-Daten Datein aus dem CareLink Export aus."
     title = "Datenquelle wählen"
 

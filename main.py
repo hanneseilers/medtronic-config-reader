@@ -5,13 +5,29 @@
 # The data must be shared with CareLink portal
 # and exported as csv data.
 import os
+import sys, getopt
 from subroutines.messageboxes import *
 from subroutines.functions import *
 
 version = "0.0.1a"
 
 
-def process():
+def welcome(csv_file=None):
+    # show welcome message and acknowledgement
+    if question_welcome_message(version=version):
+
+        # aks if to show export instructions
+        if not question_need_help_export_carelink():
+            show_help_export_carelink()
+
+        # maybe get data file
+        if isinstance(csv_file, str) and len(csv_file) > 0:
+            process(csv_file)
+        else:
+            process(get_csv_data_file(os.getcwd()))
+
+
+def process(csv_file=None):
     key_date = "Date"
     key_time = "Time"
     key_bolus_number = "Bolus Number"
@@ -20,30 +36,40 @@ def process():
     unit_blood_glucose = "mg/dl"
     unit_insulin = "I.E."
 
-    # show welcome message and acknowledgement
-    if question_welcome_message(version=version):
+    # process data file
+    if csv_file:
+        data_sets = read_csv_file_data(csv_file)
 
-        # aks if to show export instructions
-        if not question_need_help_export_carelink():
-            show_help_export_carelink()
-
-        # get data file
-        csv_file = get_csv_data_file(os.getcwd())
-        if csv_file:
-            data_sets = read_csv_file_data(csv_file)
-
-            # got through each line of data sets
-            data_sets = filter_data_sets(data_sets, keys_to_filter=[
-                key_date,
-                key_time,
-                key_bolus_number,
-                key_bolus_volume])
-            for entry in data_sets:
-                print(entry[key_date] + " " + entry[key_time] + ": " + entry[key_bolus_number]
-                      + " " + unit_blood_glucose)
-                print("\t" + entry[key_bolus_volume] + " " + unit_insulin)
+        # got through each line of data sets
+        data_sets = filter_data_sets(data_sets, keys_to_filter=[
+            key_date,
+            key_time,
+            key_bolus_number,
+            key_bolus_volume])
+        for entry in data_sets:
+            print(entry[key_date] + " " + entry[key_time] + ": " + entry[key_bolus_number]
+                  + " " + unit_blood_glucose)
+            print("\t" + entry[key_bolus_volume] + " " + unit_insulin)
 
 
 # ---- MAIN ----
 if __name__ == '__main__':
-    process()
+    input_file = None
+    argv = sys.argv[1:]
+
+    # try to get arguments
+    try:
+
+        opts, args = getopt.getopt(argv, "hi", ["input_csv=", "help"])
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                print(str(sys.argv[0]) + " <option>\n"
+                                         "-i --input_csv\tInput csv data file\n"
+                                         "-h --help\tThis help")
+            elif opt in ("-i", "--input_csv"):
+                input_file = arg
+
+    except getopt.GetoptError:
+        pass
+
+    welcome(input_file)
