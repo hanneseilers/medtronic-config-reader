@@ -66,10 +66,10 @@ def process(csv_file=None):
             key_bolus_source=key_bolus_source,
             value_bolus_auto_basal=value_bolus_source_auto_basal)
         basal_configuration = ""
-        basal_configuration_csv = "Time;{}".format(unit_insulin_per_hour)
+        basal_configuration_csv = "Time;{}\n".format(unit_insulin_per_hour)
         for time in basal_rate:
             basal_configuration += "{:8}{:.2f} {}\n".format(time, basal_rate[time], unit_insulin_per_hour)
-            basal_configuration_csv += "{:8};{:.2f}\n".format(time, basal_rate[time])
+            basal_configuration_csv += "{};{:.2f}\n".format(time, basal_rate[time])
 
         # write basal configuration
         write_csv_configuration(csv_text=basal_configuration_csv, filename="basal.csv")
