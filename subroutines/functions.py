@@ -1,5 +1,5 @@
 import re
-
+import os
 
 def read_csv_file_data(csv_data_file):
     f = open(csv_data_file, 'r')
@@ -61,6 +61,12 @@ def filter_data_sets(data_sets, keys_to_filter=[]):
                     filtered_data_sets.append(entry)
 
     return filtered_data_sets
+
+
+def write_csv_configuration(csv_text, filename="output.csv"):
+    f = open(filename, 'w')
+    f.writelines(csv_text)
+    f.close()
 
 
 def is_float(string):
