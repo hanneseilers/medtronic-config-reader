@@ -60,28 +60,60 @@ def process(csv_file=None):
         # filter for basal rate
         basal_rate = get_basal_rate(
             data_sets=data_sets,
+            key_date=key_date,
             key_time=key_time,
             key_bolus_delivered=key_bolus_volume_delivered,
             key_bolus_source=key_bolus_source,
             value_bolus_auto_basal=value_bolus_source_auto_basal)
+        basal_configuration = ""
+        basal_configuration_csv = "Time;{}".format(unit_insulin_per_hour)
         for time in basal_rate:
-            print("{:8}{:.2f} {}".format(time, basal_rate[time], unit_insulin_per_hour))
+            basal_configuration += "{:8}{:.2f} {}\n".format(time, basal_rate[time], unit_insulin_per_hour)
+            basal_configuration_csv += "{:8};{:.2f}\n".format(time, basal_rate[time])
+
+        # write basal configuration
+        write_csv_configuration(csv_text=basal_configuration_csv, filename="basal.csv")
+
+        # show configuration
+        showConfiguration(basal=basal_configuration)
 
 
-def get_basal_rate(data_sets, key_time, key_bolus_delivered, key_bolus_source, value_bolus_auto_basal):
+def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus_source, value_bolus_auto_basal):
     timeslots = {}
+    day_timeslots = {}
+    last_day = ""
     if isinstance(data_sets, list):
 
         # get all basal rates
         for entry in data_sets:
 
-            if key_time in entry \
+            if key_date in entry \
+                    and key_time in entry \
                     and key_bolus_delivered in entry \
-                    and key_bolus_source in entry\
+                    and key_bolus_source in entry \
                     and value_bolus_auto_basal in entry[key_bolus_source]:
-                # TODO: Filter for dates
+
+                # ---------- collect data ------------
+
+                day = entry[key_date]
                 time = entry[key_time]
                 basal_rate = float(str(entry[key_bolus_delivered]).replace(',', '.'))
+
+                # ---------- check for correct day ------------
+
+                # check if it is a new day > reset day
+                if day not in last_day:
+                    # save old day into timeslots
+                    for time in day_timeslots:
+                        if time not in timeslots:
+                            timeslots[time] = []
+                        timeslots[time].append(day_timeslots[time])
+
+                    # reset data for this day
+                    day_timeslots = {}
+                    last_day = day
+
+                # ---------- read actual data ------------
 
                 # check for valid basel rate
                 if basal_rate > 0:
@@ -93,18 +125,15 @@ def get_basal_rate(data_sets, key_time, key_bolus_delivered, key_bolus_source, v
                     h = int(time[0])
                     m = int(time[1])
 
-                    if m <= 15:
-                        m = "00"
-                    elif 15 < m <= 45:
-                        m = "30"
+                    if m < 30:
+                        m = 0
                     else:
-                        m = "00"
-                        h += 1
+                        m = 30
 
-                    time = "{:02d}:{}".format(h, m)
-                    if time not in timeslots:
-                        timeslots[time] = []
-                    timeslots[time].append(basal_rate)
+                    time = "{:02d}:{:02d}".format(h, m)
+                    if time not in day_timeslots:
+                        day_timeslots[time] = 0
+                    day_timeslots[time] += basal_rate
 
         # calculate basal_rate
         for time in timeslots:
@@ -117,7 +146,7 @@ def get_basal_rate(data_sets, key_time, key_bolus_delivered, key_bolus_source, v
 # ---- MAIN ----
 if __name__ == '__main__':
     input_file = None
-    skip_questions=False
+    skip_questions = False
     argv = sys.argv[1:]
 
     # try to get arguments
