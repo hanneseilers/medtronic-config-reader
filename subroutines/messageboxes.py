@@ -45,3 +45,13 @@ def get_csv_data_file(default_path: str, allowed_file_type: str = "*.csv") -> st
     title = "Datenquelle wählen"
 
     return easygui.fileopenbox(msg, title, default_path, allowed_file_type)
+
+
+def showConfiguration(basal):
+    msg = "Folgende Daten wurden ausgelesen:"
+    text = "BASAL KONFIGURATION\n-----------------------\n{}"\
+        .format(basal)
+    title = "MiniMed Konfiguration"
+
+    return easygui.textbox(msg, title, text)
+
