@@ -12,12 +12,12 @@ from subroutines.functions import *
 version = "0.0.1a"
 
 
-def welcome(csv_file=None):
+def welcome(csv_file=None, skip=False):
     # show welcome message and acknowledgement
-    if question_welcome_message(version=version):
+    if skip or question_welcome_message(version=version):
 
         # aks if to show export instructions
-        if not question_need_help_export_carelink():
+        if not skip and not question_need_help_export_carelink():
             show_help_export_carelink()
 
         # maybe get data file
@@ -55,21 +55,25 @@ def process(csv_file=None):
 # ---- MAIN ----
 if __name__ == '__main__':
     input_file = None
+    skip_questions=False
     argv = sys.argv[1:]
 
     # try to get arguments
     try:
 
-        opts, args = getopt.getopt(argv, "hi", ["input_csv=", "help"])
+        opts, args = getopt.getopt(argv, "ish", ["input_csv=", "skip", "help"])
         for opt, arg in opts:
             if opt in ("-h", "--help"):
                 print(str(sys.argv[0]) + " <option>\n"
                                          "-i --input_csv\tInput csv data file\n"
+                                         "-s --skip\tSkip all welcome messages and acknowledgement questions"
                                          "-h --help\tThis help")
             elif opt in ("-i", "--input_csv"):
                 input_file = arg
+            elif opt in ("-s", "--skip"):
+                skip_questions = True
 
     except getopt.GetoptError:
         pass
 
-    welcome(input_file)
+    welcome(input_file, skip_questions)
