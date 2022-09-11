@@ -5,6 +5,8 @@
 # The data must be shared with CareLink portal
 # and exported as csv data.
 
+version = "0.0.1a"
+
 import easygui
 import os
 
@@ -18,10 +20,19 @@ def process():
     unit_blood_glucose = "mg/dl"
     unit_insulin = "I.E."
 
-    if welcome_message():
+    # show welcome message and acknowledgement
+    if question_welcome_message():
+
+        # show help
+        if not question_need_help_export_carelink():
+            show_help_export_carelink()
+
+        # get data file
         csv_file = get_csv_data_file(os.getcwd())
         if csv_file:
             data_sets = read_csv_file_data(csv_file)
+
+            # go through each line of data sets
             for entry in data_sets:
                 if key_date in entry \
                         and key_time in entry \
@@ -33,17 +44,7 @@ def process():
                         print("\t" + entry[key_bolus_volume] + " " + unit_insulin)
 
 
-def welcome_message():
-    msg = "Willkommen zum MEDTRONIC Config Reader\n" \
-          "Dieses Tool liest die Konfiguration des automatischen Algorithmus der Minimed Insulinpumpen aus.\n\n" \
-          "Es kann keine Gewährleistung auf Korrektheit oder auf fehlerfreies Verhalten gegeben werden!\n" \
-          "Nutzen Sie die Daten nur für Anlysezwecke.\n" \
-          "Für Ihre Therapieeinstellung, sprechen Sie mit Ihrem/Ihrer behandelnden/m Arzt/Ärztin.\n\n" \
-          "Haben Sie dies zu Nenntnis genommen und verstanden?"
-    title = ""
-    options = ["Ja", "Nein"]
 
-    return easygui.ynbox(msg, title, options)
 
 
 def get_csv_data_file(default_path, allowed_file_type="*.csv"):
@@ -91,6 +92,41 @@ def read_csv_file_data(csv_data_file):
     return data_sets
 
 
-# Press the green button in the gutter to run the script.
+# ---- MAIN ----
 if __name__ == '__main__':
     process()
+
+
+# ---- MESSAGE BOXES ----
+def question_welcome_message():
+    msg = "Willkommen zum MEDTRONIC Config Reader\n" \
+          "Dieses Tool liest die Konfiguration des automatischen Algorithmus der Minimed Insulinpumpen aus.\n\n" \
+          "Es kann keine Gewährleistung auf Korrektheit oder auf fehlerfreies Verhalten gegeben werden!\n" \
+          "Nutzen Sie die Daten nur für Anlysezwecke.\n" \
+          "Für Ihre Therapieeinstellung, sprechen Sie mit Ihrem/Ihrer behandelnden/m Arzt/Ärztin.\n\n" \
+          "Haben Sie dies zu Nenntnis genommen und verstanden?"
+    title = "Medtronic Config Reader " + version
+    options = ["Ja (Weiter)", "Nein (Abbrechen)"]
+
+    return easygui.ynbox(msg, title, options)
+
+def question_need_help_export_carelink():
+    msg = "Exportieren Sie Daten für einen gewünschten Zeitraum aus Medtronic Carelink(TM) als CV Daten\n" \
+          "Brauchen Sie dabei Hilfe und eine Anleitung?"
+    title = "Daten-Export - Brauchen Sie Hilfe?"
+    options = ["Weiter (keine Hilfe)", "Hilfe anzeigen"]
+
+    return easygui.ynbox(msg, title, options)
+
+
+def show_help_export_carelink():
+    msg = "Um Ihre Daten aus CareLink (TM) zu exportieren gehen Sie wie folgt vor:\n\n" \
+          "1. Loggen Sie sich auf https://carelink.minimed.eu/ ein.\n" \
+          "2. Laden Sie ggf. Ihre Pumpendaten für den gewünschten Zeiraum hoch.\n" \
+          "3. Gehen Sie in den bereich Berichte und wählen den gewünschten Zeitraum aus.\n" \
+          "4. Klicken Sie ganz unten rechts auf der Seite aus 'Daten Export (CSV)' und speichern die Datei ab.\n" \
+          "5. Klicken Sie auf 'Fortzsetzen' und wählen Sie im nächsten Schritt die soeben heruntergeladene Datei aus."
+    title = "Daten-Export - Anleitung"
+    ok_button = "Fortsetzen"
+
+    return easygui.msgbox(msg, title, ok_button)
