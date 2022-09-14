@@ -84,6 +84,9 @@ def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus
     last_day = ""
     if isinstance(data_sets, list):
 
+        # get basal rate interval
+        basalrate_interval_choice = 0 if not skip_questions else get_time_interval("Basalrate")
+
         # get all basal rates
         for entry in data_sets:
 
@@ -117,6 +120,7 @@ def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus
 
                 # check for valid basel rate
                 if basal_rate > 0:
+
                     # get timeslot
                     time = str(time).split(':')
                     if not len(time) > 1:
@@ -125,10 +129,16 @@ def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus
                     h = int(time[0])
                     m = int(time[1])
 
-                    if m < 30:
-                        m = 0
+                    # check which time interval is required
+                    if basalrate_interval_choice > 0:
+                        if m < 30:
+                            m = 0
+                        else:
+                            m = 30
+
                     else:
-                        m = 30
+                        m = 0
+
 
                     time = "{:02d}:{:02d}".format(h, m)
                     if time not in day_timeslots:
@@ -141,6 +151,10 @@ def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus
             timeslots[time] = statistics.median(data)
 
         return collections.OrderedDict(sorted(timeslots.items()))
+
+
+
+
 
 
 # ---- MAIN ----

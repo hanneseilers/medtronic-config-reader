@@ -58,7 +58,7 @@ def get_time_interval(reason, time_choices=["60 Min.", "30 Min."]):
     title = "Zeitintervall wählen"
     default_choice = 0
     cancel_choice = default_choice
-    easygui.indexbox(msg, title, choices=time_choices, default_choice=default_choice, cancel_choice=cancel_choice)
+    return easygui.indexbox(msg, title, choices=time_choices, default_choice=default_choice, cancel_choice=cancel_choice)
 
 
 def show_configuration(basal):
