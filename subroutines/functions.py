@@ -1,5 +1,5 @@
 import re
-import os
+
 
 def read_csv_file_data(csv_data_file):
     f = open(csv_data_file, 'r')
