@@ -75,7 +75,7 @@ def process(csv_file=None):
         write_csv_configuration(csv_text=basal_configuration_csv, filename="basal.csv")
 
         # show configuration
-        showConfiguration(basal=basal_configuration)
+        show_configuration(basal=basal_configuration)
 
 
 def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus_source, value_bolus_auto_basal):

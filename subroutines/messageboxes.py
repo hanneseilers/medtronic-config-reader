@@ -47,7 +47,21 @@ def get_csv_data_file(default_path: str, allowed_file_type: str = "*.csv") -> st
     return easygui.fileopenbox(msg, title, default_path, allowed_file_type)
 
 
-def showConfiguration(basal):
+def get_time_interval(reason, time_choices=["60 Min.", "30 Min."]):
+    """
+    :param reason:          reason for what to select a time interval
+    :param time_choices:    list of times to choose between
+    :return:                index of chosen time, starting with 0
+    :rtype: int
+    """
+    msg = "Wählen Sie ein Zeitinterval für: {}".format(reason)
+    title = "Zeitintervall wählen"
+    default_choice = 0
+    cancel_choice = default_choice
+    easygui.indexbox(msg, title, choices=time_choices, default_choice=default_choice, cancel_choice=cancel_choice)
+
+
+def show_configuration(basal):
     msg = "Folgende Daten wurden ausgelesen:"
     text = "BASAL KONFIGURATION\n-----------------------\n{}"\
         .format(basal)
