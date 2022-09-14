@@ -61,10 +61,11 @@ def get_time_interval(reason, time_choices=["60 Min.", "30 Min."]):
     return easygui.indexbox(msg, title, choices=time_choices, default_choice=default_choice, cancel_choice=cancel_choice)
 
 
-def show_configuration(basal):
+def show_configuration(basal, correction_factor):
     msg = "Folgende Daten wurden ausgelesen:"
-    text = "BASAL KONFIGURATION\n-----------------------\n{}"\
-        .format(basal)
+    text = "BASAL KONFIGURATION\n-----------------------\n{}\n\n" \
+           "KORREKTUR-FAKTOR\n-----------------------\n{}"\
+        .format(basal, correction_factor)
     title = "MiniMed Konfiguration"
 
     return easygui.textbox(msg, title, text)

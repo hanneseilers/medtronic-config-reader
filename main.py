@@ -26,12 +26,12 @@ def welcome(csv_file=None, skip=False):
 
         # maybe get data file
         if isinstance(csv_file, str) and len(csv_file) > 0:
-            process(csv_file)
+            process(csv_file, skip)
         else:
-            process(get_csv_data_file(os.getcwd()))
+            process(get_csv_data_file(os.getcwd()), skip)
 
 
-def process(csv_file=None):
+def process(csv_file=None, skip=False):
     key_date = "Date"
     key_time = "Time"
     key_bolus_number = "Bolus Number"
@@ -39,6 +39,8 @@ def process(csv_file=None):
     key_basal_rate = "Basal Rate (U/h)"
     key_bolus_volume_delivered = "Bolus Volume Delivered (U)"
     key_bolus_source = "Bolus Source"
+    key_bwz_bg_input = "BWZ BG Input (mg/dL)"
+    key_bwz_correction_estimate = "BWZ Correction Estimate (U)"
 
     value_bolus_source_auto_basal = "CLOSED_LOOP_AUTO_BASAL"
 
@@ -48,10 +50,10 @@ def process(csv_file=None):
 
     # process data file
     if csv_file:
-        data_sets = read_csv_file_data(csv_file)
+        data_sets_raw = read_csv_file_data(csv_file)
 
         # got through each line of data sets
-        data_sets = filter_data_sets(data_sets, keys_to_filter=[
+        data_sets = filter_data_sets(data_sets_raw, keys_to_filter=[
             key_date,
             key_time,
             key_bolus_volume_delivered,
@@ -64,7 +66,9 @@ def process(csv_file=None):
             key_time=key_time,
             key_bolus_delivered=key_bolus_volume_delivered,
             key_bolus_source=key_bolus_source,
-            value_bolus_auto_basal=value_bolus_source_auto_basal)
+            value_bolus_auto_basal=value_bolus_source_auto_basal,
+            skip=skip
+        )
         basal_configuration = ""
         basal_configuration_csv = "Time;{}\n".format(unit_insulin_per_hour)
         for time in basal_rate:
@@ -74,18 +78,48 @@ def process(csv_file=None):
         # write basal configuration
         write_csv_configuration(csv_text=basal_configuration_csv, filename="basal.csv")
 
+        # got through each line of data sets
+        data_sets = filter_data_sets(data_sets_raw, keys_to_filter=[
+            key_date,
+            key_time,
+            key_bwz_bg_input,
+            key_bwz_correction_estimate])
+
+        # filter for correction factor
+        correction_factor = get_correction_factor(
+            data_sets=data_sets,
+            key_date=key_date,
+            key_time=key_time,
+            key_bwz_bg_input=key_bwz_bg_input,
+            key_bwz_correction_estimate=key_bwz_correction_estimate,
+            skip=skip
+        )
+        correction_factor = {}
+        correction_configuration = ""
+        correction_configuration_csv = "Time;{}\n".format(unit_insulin_per_hour)
+        for time in correction_factor:
+            correction_configuration += "{:8}{:.2f} {}/{}\n".format(
+                time,
+                correction_factor[time],
+                unit_blood_glucose,
+                unit_insulin)
+            correction_configuration_csv += "{};{:.2f}\n".format(time, correction_factor[time])
+
+        # write basal configuration
+        write_csv_configuration(csv_text=correction_configuration_csv, filename="correction_factor.csv")
+
         # show configuration
-        show_configuration(basal=basal_configuration)
+        show_configuration(basal=basal_configuration, correction_factor=correction_configuration)
 
 
-def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus_source, value_bolus_auto_basal):
+def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus_source, value_bolus_auto_basal, skip=False):
     timeslots = {}
     day_timeslots = {}
     last_day = ""
     if isinstance(data_sets, list):
 
         # get basal rate interval
-        basalrate_interval_choice = 0 if not skip_questions else get_time_interval("Basalrate")
+        basalrate_interval_choice = 0 if skip else get_time_interval("Basalrate")
 
         # get all basal rates
         for entry in data_sets:
@@ -139,7 +173,6 @@ def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus
                     else:
                         m = 0
 
-
                     time = "{:02d}:{:02d}".format(h, m)
                     if time not in day_timeslots:
                         day_timeslots[time] = 0
@@ -153,8 +186,84 @@ def get_basal_rate(data_sets, key_date, key_time, key_bolus_delivered, key_bolus
         return collections.OrderedDict(sorted(timeslots.items()))
 
 
+def get_correction_factor(data_sets, key_date, key_time, key_bwz_bg_input, key_bwz_correction_estimate, skip=False):
+    timeslots = {}
+    day_timeslots = {}
+    last_day = ""
 
+    if isinstance(data_sets, list):
 
+        # get basal rate interval
+        correction_factor_interval_choice = 0 if skip else get_time_interval("Korrekturfaktor")
+
+        # get all basal rates
+        for entry in data_sets:
+
+            if key_date in entry \
+                    and key_time in entry \
+                    and key_bwz_bg_input in entry \
+                    and len(entry[key_bwz_bg_input]) > 0 \
+                    and int(entry[key_bwz_bg_input]) > 0 \
+                    and key_bwz_correction_estimate in entry \
+                    and len(entry[key_bwz_correction_estimate]) > 0:
+
+                # ---------- collect data ------------
+
+                day = entry[key_date]
+                time = entry[key_time]
+                bg_input = int(str(entry[key_bwz_bg_input]).replace(',', '.'))
+                correction_rate = float(str(entry[key_bwz_correction_estimate]).replace(',', '.'))
+
+                # ---------- check for correct day ------------
+
+                # check if it is a new day > reset day
+                if day not in last_day:
+                    # save old day into timeslots
+                    for time in day_timeslots:
+                        if time not in timeslots:
+                            timeslots[time] = []
+                        timeslots[time].append(day_timeslots[time])
+
+                    # reset data for this day
+                    day_timeslots = {}
+                    last_day = day
+
+                # ---------- read actual data ------------
+
+                # check for valid correction rate
+                if bg_input > 0 and correction_rate > 0:
+
+                    correction_factor = int((bg_input-100)/correction_rate)
+
+                    # get timeslot
+                    time = str(time).split(':')
+                    if not len(time) > 1:
+                        break
+
+                    h = int(time[0])
+                    m = int(time[1])
+
+                    # check which time interval is required
+                    if correction_factor_interval_choice > 0:
+                        if m < 30:
+                            m = 0
+                        else:
+                            m = 30
+
+                    else:
+                        m = 0
+
+                    time = "{:02d}:{:02d}".format(h, m)
+                    if time not in day_timeslots:
+                        day_timeslots[time] = 0
+                    day_timeslots[time] += correction_factor
+
+        # calculate basal_rate
+        for time in timeslots:
+            data = timeslots[time]
+            timeslots[time] = statistics.median(data)
+
+        return collections.OrderedDict(sorted(timeslots.items()))
 
 
 # ---- MAIN ----
